@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b3d5c" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>מטקות וירטואליות</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="vendor/peerjs.min.js"></script>
+  <script src="vendor/qrcode.js"></script>
+  <script src="vendor/jsQR.js"></script>
+</head>
+<body>
+  <video id="cam" playsinline muted autoplay></video>
+  <canvas id="overlay"></canvas>
+
+  <!-- מסך פתיחה -->
+  <section id="scr-home" class="screen solid active">
+    <div class="logo">🏓</div>
+    <h1>מטקות וירטואליות</h1>
+    <p class="lead">כמה שחקנים משחקים?</p>
+    <div class="col">
+      <button id="btn-solo" class="big">👤 שחקן יחיד</button>
+      <button id="btn-duo" class="big">👥 שני שחקנים</button>
+    </div>
+    <div id="duo-opts" class="col" hidden>
+      <button id="btn-host" class="primary">יצירת משחק (שחקן ראשי) – הפקת קוד QR</button>
+      <button id="btn-join" class="primary">הצטרפות למשחק – סריקת קוד QR</button>
+    </div>
+
+    <details class="settings">
+      <summary>⚙️ הגדרות</summary>
+      <label>כדורים לכל שחקן
+        <input id="set-balls" type="number" min="1" max="30" value="10" />
+      </label>
+      <label>רמת קושי
+        <select id="set-level">
+          <option value="easy">קל</option>
+          <option value="normal" selected>רגיל</option>
+          <option value="hard">קשה</option>
+        </select>
+      </label>
+      <label>רוחב התחום: <b id="set-bounds-val">25</b>°
+        <input id="set-bounds" type="range" min="10" max="45" value="25" />
+      </label>
+      <label>רגישות חבטה: <b id="set-sens-val">14</b>
+        <input id="set-sens" type="range" min="6" max="30" value="14" />
+        <small>ערך נמוך = חבטה קלה יותר מספיקה</small>
+      </label>
+    </details>
+    <p class="hint">נדרשת גישה למצלמה ולחיישני התנועה של הטלפון.</p>
+  </section>
+
+  <!-- הוזמנת דרך קישור -->
+  <section id="scr-invite" class="screen solid">
+    <div class="logo">📨</div>
+    <h2>הוזמנת למשחק מטקות!</h2>
+    <p>קוד משחק: <b id="invite-code"></b></p>
+    <button id="btn-invite-join" class="big primary">הצטרף עכשיו</button>
+    <button class="link back">חזרה</button>
+  </section>
+
+  <!-- מארח: קוד QR -->
+  <section id="scr-host" class="screen solid">
+    <h2>שחקן ראשי</h2>
+    <p>השחקן השני סורק את הקוד כדי להצטרף:</p>
+    <div id="qr" class="qr"></div>
+    <p>קוד ידני: <b id="host-code" class="code"></b></p>
+    <p id="host-status" class="status">מתחבר לשרת…</p>
+    <button class="link back">ביטול</button>
+  </section>
+
+  <!-- מצטרף: סריקה -->
+  <section id="scr-join" class="screen cam">
+    <div class="scan-frame"></div>
+    <div class="panel bottom">
+      <p>כוון את המצלמה לקוד ה‑QR שבטלפון של השחקן הראשי</p>
+      <div class="row">
+        <input id="join-code" maxlength="6" placeholder="או הקלד קוד" autocomplete="off" />
+        <button id="btn-join-manual">הצטרף</button>
+      </div>
+      <p id="join-status" class="status"></p>
+      <button class="link back">ביטול</button>
+    </div>
+  </section>
+
+  <!-- כיול -->
+  <section id="scr-calib" class="screen cam">
+    <div class="crosshair"></div>
+    <div class="panel top">
+      <p id="calib-title"><b>עמדו במרחק של 2–3 מטרים וכוונו את המצלמה אחד לשני</b></p>
+      <p id="calib-hint" class="status"></p>
+    </div>
+    <div class="panel bottom">
+      <p>מרחק משוער: <b id="calib-dist">—</b></p>
+      <label class="slider">תיקון ידני:
+        <input id="calib-slider" type="range" min="1" max="5" step="0.1" value="2.5" />
+        <span id="calib-slider-val">2.5 מ'</span>
+      </label>
+      <p id="calib-partner" class="status"></p>
+      <button id="btn-ready" class="big primary">אני מוכן – כיילתי</button>
+      <button class="link back">יציאה</button>
+    </div>
+  </section>
+
+  <!-- משחק -->
+  <section id="scr-game" class="screen cam game">
+    <div class="hud">
+      <div class="hud-box me"><span id="hud-me-name">אתה</span><b id="hud-me">10</b><small>כדורים</small></div>
+      <div class="hud-box mid"><small>רצף</small><b id="hud-rally">0</b><small id="hud-best">שיא 0</small></div>
+      <div class="hud-box opp"><span id="hud-opp-name">שותף</span><b id="hud-opp">10</b><small>כדורים</small></div>
+    </div>
+    <div id="msg" class="msg"></div>
+    <div id="msg-sub" class="msg-sub"></div>
+    <button id="btn-quit" class="link quit">✕</button>
+  </section>
+
+  <!-- סיום -->
+  <section id="scr-over" class="screen solid">
+    <div class="logo" id="over-icon">🏆</div>
+    <h2 id="over-title"></h2>
+    <p id="over-stats"></p>
+    <button id="btn-rematch" class="big primary">משחק חוזר</button>
+    <p id="over-wait" class="status" hidden>ממתין לשחקן הראשי…</p>
+    <button id="btn-home" class="link">מסך ראשי</button>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
