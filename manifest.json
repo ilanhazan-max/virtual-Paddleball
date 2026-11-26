@@ -1,0 +1,14 @@
+{
+  "name": "מטקות וירטואליות",
+  "short_name": "מטקות",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0b3d5c",
+  "theme_color": "#0b3d5c",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
